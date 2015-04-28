@@ -485,8 +485,17 @@ class Fresque
             'REDIS_NAMESPACE=' . escapeshellarg($this->runtime['Redis']['namespace']) . " \\\n".
             'COUNT=' . 1 . " \\\n".
             'LOGHANDLER=' . escapeshellarg($this->runtime['Log']['handler']) . " \\\n".
-            'LOGHANDLERTARGET=' . escapeshellarg($this->runtime['Log']['target']) . " \\\n".
-            'php ' . escapeshellarg($resqueBin) . " \\\n";
+            'LOGHANDLERTARGET=' . escapeshellarg($this->runtime['Log']['target']) . " \\\n";
+
+            if(isset($this->runtime['Environment']['vars']) && is_array($this->runtime['Environment']['vars'])) {
+                if(is_array($this->runtime['Environment']['vars']) && count($this->runtime['Environment']['vars'])) {
+                    foreach($this->runtime['Environment']['vars'] as $env_var_key=>$env_var_val) {
+                        $cmd .= $env_var_key . '=' . escapeshellarg($env_var_val) . " \\\n";
+                    }
+                }
+            }
+
+            $cmd .= 'php ' . escapeshellarg($resqueBin) . " \\\n";
             $cmd .= ' >> '. escapeshellarg($logFile).' 2>&1" >/dev/null 2>&1 &';
 
             $this->debug('Starting worker (' . $i . ')');
