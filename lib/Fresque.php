@@ -49,7 +49,7 @@ class Fresque
 
     public static $checkStartedWorkerBufferTime = 100000;
 
-    const VERSION = '1.3.0';
+    const VERSION = '1.3.1';
 
     public function __construct()
     {
@@ -471,9 +471,20 @@ class Fresque
 
             $libraryPath = rtrim($libraryPath, '/');
 
+            // build environment variables string to be passed to the worker
+            $env_vars = "";
+            foreach($this->runtime['Env'] as $env_name => $env_value) {
+                // if only the name is supplied, we get the value from environment
+                if (strlen($env_value) == 0) {
+                    $env_value = getenv($env_name);
+                }
+                $env_vars .= $env_name . '=' . escapeshellarg($env_value) . " \\\n";
+            }
+
             $cmd = 'nohup ' . ($this->runtime['Default']['user'] !== $this->getProcessOwner() ? ('sudo -u '. escapeshellarg($this->runtime['Default']['user'])) : "") . " \\\n".
             'bash -c "cd ' .
             escapeshellarg($libraryPath) . '; ' . " \\\n".
+            $env_vars .
             (($this->runtime['Default']['verbose']) ? 'VVERBOSE' : 'VERBOSE') . '=true ' . " \\\n".
             'QUEUE=' . escapeshellarg($this->runtime['Default']['queue']) . " \\\n".
             'PIDFILE=' . escapeshellarg($pidFile) . " \\\n".
@@ -1166,7 +1177,8 @@ class Fresque
                 'interval',
                 'handler',
                 'target'
-            )
+            ),
+            'Env' => array()
         );
 
         foreach ($settings as $scope => $param_names) {
